@@ -1741,6 +1741,47 @@ static void test_convert_responses_to_chatcmpl() {
 
         assert_equals(false, result.contains("tools"));
     }
+
+    // Test Codex built-in apply_patch still fails for gpt-oss model aliases
+    {
+        json input = json::parse(R"({
+            "input": "Hello",
+            "model": "gpt-oss-20b",
+            "tools": [
+                {
+                    "type": "custom",
+                    "name": "apply_patch"
+                }
+            ]
+        })");
+
+        bool threw = false;
+        try {
+            server_chat_convert_responses_to_chatcmpl(input);
+        } catch (const std::invalid_argument & err) {
+            threw = true;
+            assert_equals(std::string("'type' of tool must be 'function'"), std::string(err.what()));
+        }
+        assert_equals(true, threw);
+    }
+
+    // Test renamed gpt-oss aliases can skip non-function apply_patch
+    {
+        json input = json::parse(R"({
+            "input": "Hello",
+            "model": "renamed-model",
+            "tools": [
+                {
+                    "type": "custom",
+                    "name": "apply_patch"
+                }
+            ]
+        })");
+
+        json result = server_chat_convert_responses_to_chatcmpl(input);
+
+        assert_equals(false, result.contains("tools"));
+    }
 }
 
 static void test_template_output_peg_parsers(bool detailed_debug) {
