@@ -253,17 +253,12 @@ json server_chat_convert_responses_to_chatcmpl(const json & response_body) {
         if (!response_body.at("tools").is_array()) {
             throw std::invalid_argument("'tools' must be an array of objects");
         }
-        const std::string model = json_value(response_body, "model", std::string());
         std::vector<json> chatcmpl_tools;
         for (json resp_tool : response_body.at("tools")) {
             json chatcmpl_tool;
 
             const std::string type = json_value(resp_tool, "type", std::string());
             if (type != "function") {
-                const std::string name = json_value(resp_tool, "name", std::string());
-                if (model.find("gpt-oss") != std::string::npos && name == "apply_patch") {
-                    throw std::invalid_argument("'type' of tool must be 'function'");
-                }
                 // Non-function Responses tools have no Chat Completions equivalent.
                 SRV_WRN("unsupported Responses tool type '%s' skipped\n", type.c_str());
                 continue;
